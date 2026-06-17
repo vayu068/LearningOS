@@ -1,0 +1,26 @@
+{
+  "project_type": "Full-stack serverless EdTech platform - Next.js frontend + AWS Lambda backend + AWS CDK infrastructure",
+  "language": "TypeScript",
+  "build_system": "pnpm workspaces monorepo with turbo for build orchestration",
+  "test_framework": "Vitest for unit/integration tests, Playwright for E2E browser tests",
+  "build_command": "pnpm build",
+  "test_command": "pnpm test",
+  "verification_instructions": "1. Run pnpm install to install dependencies. 2. Run pnpm build to verify TypeScript compilation. 3. Run pnpm test to run unit tests. 4. Run pnpm test:e2e for Playwright tests (requires dev server running).",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "1. Ensure Node.js 22+ is available. 2. Run pnpm install at root. 3. Copy .env.example to .env.local and configure. 4. Run pnpm dev to start development servers.",
+  "environment_constraints": "OPEN_INTERNET - full network access. Node.js v22 via nvm, pnpm available, Bun 1.2.14 available.",
+  "contribution_requirements": "Modular architecture, DPI-compliant APIs, DPDP Act compliance, multi-tenant design, serverless-first, offline-capable",
+  "key_patterns": "Greenfield project - establishing patterns: Domain-driven design with bounded contexts, Repository pattern for data access, CQRS for read/write separation, Event-driven architecture with SQS/SNS, Multi-tenant isolation via tenant-scoped DynamoDB keys and Cognito user pools",
+  "relevant_files": [
+    "package.json",
+    "pnpm-workspace.yaml",
+    "turbo.json",
+    "apps/web/",
+    "apps/api/",
+    "packages/shared/",
+    "packages/ui/",
+    "infrastructure/",
+    "tests/"
+  ],
+  "directory_structure": "Monorepo structure: apps/web (Next.js frontend), apps/api (serverless Lambda functions), packages/shared (shared types, utils, DPI integrations), packages/ui (component library), packages/ai (AI/ML service layer), infrastructure/ (AWS CDK stacks), tests/ (E2E Playwright tests), docs/ (architecture documentation)"
+}

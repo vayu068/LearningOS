@@ -1,0 +1,47 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Implement the AI-powered adaptive learning engine, AI tutor service, and content generation system. This is the core AI layer that powers personalized learning pathways, vernacular tutoring, and automated content creation using AWS Bedrock/OpenAI integration patterns.",
+  "status": "pending",
+  "steps": [
+    "Create packages/ai/src/types.ts - Comprehensive AI types: LearningPath, KnowledgeGraph, CompetencyLevel, LearningObjective, ContentDifficulty, AdaptiveRule, TutorSession, ContentTemplate",
+    "Create packages/ai/src/providers/base.ts - Abstract AI provider interface supporting multiple backends (AWS Bedrock, OpenAI, custom models) with streaming support",
+    "Create packages/ai/src/providers/bedrock.ts - AWS Bedrock provider implementation: model invocation, streaming responses, error handling, retry logic",
+    "Create packages/ai/src/providers/openai.ts - OpenAI provider implementation as fallback/alternative with proper API key management",
+    "Create packages/ai/src/engine/adaptive-learning.ts - Adaptive learning engine: analyzes student performance, builds knowledge graphs, generates personalized learning paths, adjusts difficulty dynamically based on Bloom's taxonomy levels",
+    "Create packages/ai/src/engine/assessment.ts - AI assessment engine: generates questions at appropriate difficulty, evaluates responses (MCQ + subjective), provides detailed feedback, tracks competency progression",
+    "Create packages/ai/src/engine/knowledge-graph.ts - Knowledge graph management: creates/updates subject-specific knowledge graphs, maps prerequisites, identifies learning gaps",
+    "Create packages/ai/src/tutor/tutor-service.ts - AI Tutor service: manages conversation context, provides explanations in multiple languages (Hindi, English, Tamil, Telugu, etc.), adapts teaching style to student level, uses Socratic method",
+    "Create packages/ai/src/tutor/voice-interface.ts - Voice interface abstraction: speech-to-text/text-to-speech integration points for vernacular AI tutors, language detection",
+    "Create packages/ai/src/content/generator.ts - AI content generator: creates lesson plans, quizzes, explanations, summaries from curriculum standards, supports multiple content formats (text, structured, interactive)",
+    "Create packages/ai/src/content/curriculum-mapper.ts - Curriculum mapping service: maps content to NEP 2020 competency frameworks, NCERT/state board standards, grade-appropriate difficulty",
+    "Create packages/ai/src/teacher-copilot/copilot.ts - Teacher co-pilot: generates lesson plans, suggests activities, creates assessments, provides classroom analytics insights, auto-grades assignments",
+    "Create packages/ai/src/teacher-copilot/analytics.ts - Classroom analytics: student engagement scoring, learning pattern detection, at-risk student identification, recommendation generation",
+    "Create apps/api/src/handlers/ai/learning-path.ts - Lambda handler for learning path generation and management",
+    "Create apps/api/src/handlers/ai/tutor.ts - Lambda handler for AI tutor sessions with WebSocket support pattern",
+    "Create apps/api/src/handlers/ai/content.ts - Lambda handler for content generation requests",
+    "Create apps/api/src/handlers/ai/assessment.ts - Lambda handler for AI-powered assessment generation and evaluation",
+    "Create apps/api/src/handlers/ai/teacher-copilot.ts - Lambda handler for teacher co-pilot features",
+    "Create packages/ai/src/__tests__/adaptive-learning.test.ts - Unit tests for adaptive learning engine with mocked AI providers",
+    "Create packages/ai/src/__tests__/tutor-service.test.ts - Unit tests for tutor service including multi-language support",
+    "Create packages/ai/src/__tests__/content-generator.test.ts - Unit tests for content generation with curriculum mapping",
+    "Create packages/ai/src/__tests__/teacher-copilot.test.ts - Unit tests for teacher co-pilot features"
+  ],
+  "acceptance_criteria": [
+    "All AI package TypeScript files compile without errors",
+    "Adaptive learning engine generates valid learning paths given mock student performance data",
+    "AI tutor service handles multi-language conversations with proper context management",
+    "Content generator produces structured content mapped to curriculum standards",
+    "Teacher co-pilot generates lesson plans and assessment items",
+    "All unit tests pass with mocked AI provider responses",
+    "Provider abstraction allows switching between Bedrock and OpenAI without code changes",
+    "Assessment engine generates questions at configurable Bloom's taxonomy levels"
+  ],
+  "verification": [
+    "cd /projects/sandbox/LearningOS && pnpm build",
+    "cd /projects/sandbox/LearningOS && pnpm --filter @learning-os/ai test",
+    "cd /projects/sandbox/LearningOS && pnpm --filter @learning-os/api test"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

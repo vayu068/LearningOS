@@ -1,0 +1,7 @@
+{
+  "task_id": "task-learning-os-platform",
+  "task_description": "Build a complete production-grade AI-enabled EdTech platform (National Learning Operating System) meeting DIC/MeitY EOI requirements. Serverless AWS architecture, multi-tenant design, AI-powered adaptive learning, DPI compliance, offline-first, and comprehensive testing with Playwright.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004", "FEAT-005"],
+  "blocked_reason": null
+}

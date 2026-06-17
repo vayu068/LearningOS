@@ -1,0 +1,44 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Implement the multi-tenant authentication system using AWS Cognito patterns, the core data models with DynamoDB single-table design, and the shared middleware for tenant isolation. This forms the security and data foundation for the entire platform.",
+  "status": "pending",
+  "steps": [
+    "Create packages/shared/src/types/tenant.ts with comprehensive multi-tenant types: Tenant (id, name, type: school|university|institute|government, config, subscription tier, domain), TenantUser, TenantContext, TenantConfig (branding, features enabled, AI quotas)",
+    "Create packages/shared/src/types/user.ts with user types: User, UserProfile, UserRole (student|teacher|admin|principal|governance|parent), UserPermissions, and role-based access control (RBAC) definitions",
+    "Create packages/shared/src/types/auth.ts with auth types: AuthToken, AuthSession, CognitoConfig per tenant, MFA settings",
+    "Create packages/shared/src/types/dpi.ts with DPI integration types: APAARProfile, DigiLockerDocument, AcademicBankCredit, ConsentArtifact (DPDP compliant)",
+    "Create apps/api/src/middleware/auth.ts - JWT verification middleware that extracts tenant context from Cognito tokens, validates tenant isolation, enforces RBAC",
+    "Create apps/api/src/middleware/tenant.ts - Tenant resolution middleware that identifies tenant from subdomain/header, loads tenant config, injects TenantContext",
+    "Create apps/api/src/middleware/rateLimit.ts - Per-tenant rate limiting with configurable thresholds based on subscription tier",
+    "Create apps/api/src/models/base.ts - DynamoDB single-table design base model with partition key (TENANT#tenantId), sort key patterns, GSI definitions for access patterns",
+    "Create apps/api/src/models/tenant.ts - Tenant CRUD operations with DynamoDB DocumentClient, including tenant provisioning, configuration updates, usage tracking",
+    "Create apps/api/src/models/user.ts - User model with tenant-scoped access patterns, profile management, role assignments",
+    "Create apps/api/src/handlers/auth/register.ts - Multi-tenant user registration Lambda: validates tenant, creates Cognito user in tenant user pool group, stores profile in DynamoDB",
+    "Create apps/api/src/handlers/auth/login.ts - Authentication Lambda: authenticates against Cognito, returns JWT with tenant claims, logs session",
+    "Create apps/api/src/handlers/auth/refresh.ts - Token refresh Lambda with session validation",
+    "Create apps/api/src/handlers/tenants/create.ts - Tenant onboarding Lambda: provisions new tenant (school/university), sets up configuration, initializes Cognito group",
+    "Create apps/api/src/handlers/tenants/manage.ts - Tenant management Lambda: update config, manage subscription, view usage analytics",
+    "Create packages/shared/src/utils/encryption.ts - Data encryption utilities for PII (DPDP compliance): encrypt/decrypt helpers using AWS KMS patterns",
+    "Create packages/shared/src/utils/consent.ts - Consent management utilities for DPDP Act compliance: consent collection, verification, withdrawal",
+    "Create apps/api/src/handlers/auth/__tests__/auth.test.ts - Unit tests for auth handlers using Vitest with mocked AWS services",
+    "Create apps/api/src/handlers/tenants/__tests__/tenants.test.ts - Unit tests for tenant management handlers",
+    "Create apps/api/src/middleware/__tests__/middleware.test.ts - Unit tests for auth, tenant, and rate limit middleware"
+  ],
+  "acceptance_criteria": [
+    "All TypeScript files compile without errors in apps/api and packages/shared",
+    "Unit tests for auth handlers pass with mocked Cognito and DynamoDB",
+    "Unit tests for tenant management pass",
+    "Middleware correctly extracts tenant context and enforces isolation",
+    "DPDP consent types properly model consent lifecycle (collect, verify, withdraw)",
+    "DynamoDB single-table design supports all required access patterns with proper key structure",
+    "Rate limiting is configurable per tenant subscription tier"
+  ],
+  "verification": [
+    "cd /projects/sandbox/LearningOS && pnpm build",
+    "cd /projects/sandbox/LearningOS && pnpm --filter @learning-os/api test",
+    "cd /projects/sandbox/LearningOS && pnpm --filter @learning-os/shared test"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

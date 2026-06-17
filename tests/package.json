@@ -1,0 +1,16 @@
+{
+  "name": "@learning-os/tests",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
+    "build": "echo \"No build needed for tests\"",
+    "lint": "echo \"No lint for tests\"",
+    "clean": "rm -rf test-results playwright-report node_modules"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0"
+  }
+}
