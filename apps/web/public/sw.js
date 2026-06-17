@@ -177,19 +177,51 @@ async function syncQueuedRequests() {
       
       const queueItem = await response.json();
       try {
-        await fetch(queueItem.url, {
+        const result = await fetch(queueItem.url, {
           method: queueItem.method,
           headers: queueItem.headers,
           body: queueItem.body || undefined,
         });
-        await cache.delete(key);
+        
+        if (result.ok || (result.status >= 200 && result.status < 300)) {
+          // Success - remove from queue
+          await cache.delete(key);
+        } else if (result.status >= 400 && result.status < 500) {
+          // Client error (4xx): request is permanently failed (e.g., 409 conflict,
+          // 400 validation error due to stale state, 403 forbidden).
+          // Remove from queue and notify the user - retrying will not help.
+          await cache.delete(key);
+          await notifyClientOfFailedSync(queueItem, result.status);
+        } else {
+          // Server error (5xx): transient failure, keep in queue for retry
+          console.log("Server error for:", queueItem.url, "status:", result.status);
+        }
       } catch {
-        // Keep in queue if still offline
-        console.log("Sync failed for:", queueItem.url);
+        // Network error - keep in queue for retry when connectivity returns
+        console.log("Network error during sync for:", queueItem.url);
       }
     }
   } catch (err) {
     console.error("Sync failed:", err);
+  }
+}
+
+/**
+ * Notifies the client (main thread) that a queued mutation permanently failed.
+ * The client should surface this to the user so they can retry manually.
+ */
+async function notifyClientOfFailedSync(queueItem, statusCode) {
+  const clients = await self.clients.matchAll({ type: "window" });
+  for (const client of clients) {
+    client.postMessage({
+      type: "SYNC_MUTATION_FAILED",
+      payload: {
+        url: queueItem.url,
+        method: queueItem.method,
+        statusCode,
+        timestamp: queueItem.timestamp,
+      },
+    });
   }
 }
 

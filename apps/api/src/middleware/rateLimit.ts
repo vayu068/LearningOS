@@ -33,6 +33,8 @@ export interface RateLimitStore {
 
 /**
  * In-memory rate limit store for development/testing.
+ * NOTE: This store resets on every Lambda cold start and cannot share state
+ * across concurrent invocations. Use DynamoDBRateLimitStore for production.
  */
 export class InMemoryRateLimitStore implements RateLimitStore {
   private windows: Map<string, { count: number; resetAt: Date }> = new Map();
@@ -59,6 +61,100 @@ export class InMemoryRateLimitStore implements RateLimitStore {
   clear(): void {
     this.windows.clear();
   }
+}
+
+/**
+ * DynamoDB-based rate limit store for serverless (Lambda) environments.
+ * Uses atomic counters (UpdateExpression ADD) and TTL for automatic cleanup.
+ *
+ * Table schema:
+ *   PK: rate limit key (e.g., "rate:user:tenant-1:user-1")
+ *   count: number (atomic counter)
+ *   resetAt: ISO timestamp (window expiration)
+ *   TTL: epoch seconds (for DynamoDB automatic deletion)
+ *
+ * TODO: Wire this to an actual DynamoDB DocumentClient in the Lambda handler
+ * configuration. The API Gateway burst/rate limits (100 burst, 50/s) provide
+ * a safety net, but this store enables per-tenant/per-user granularity.
+ */
+export class DynamoDBRateLimitStore implements RateLimitStore {
+  private client: DynamoDBRateLimitClient;
+  private tableName: string;
+
+  constructor(client: DynamoDBRateLimitClient, tableName: string) {
+    this.client = client;
+    this.tableName = tableName;
+  }
+
+  async increment(key: string, windowMs: number): Promise<{ count: number; resetAt: Date }> {
+    const now = new Date();
+    const resetAt = new Date(now.getTime() + windowMs);
+    const ttlSeconds = Math.floor(resetAt.getTime() / 1000) + 60; // TTL with 60s grace
+
+    try {
+      const result = await this.client.updateItem({
+        tableName: this.tableName,
+        key: { PK: key },
+        updateExpression: "SET #resetAt = if_not_exists(#resetAt, :resetAt), #ttl = if_not_exists(#ttl, :ttl) ADD #count :inc",
+        conditionExpression: "attribute_not_exists(#resetAt) OR #resetAt > :now",
+        expressionAttributeNames: {
+          "#count": "count",
+          "#resetAt": "resetAt",
+          "#ttl": "TTL",
+        },
+        expressionAttributeValues: {
+          ":inc": 1,
+          ":resetAt": resetAt.toISOString(),
+          ":ttl": ttlSeconds,
+          ":now": now.toISOString(),
+        },
+      });
+
+      return {
+        count: result.count,
+        resetAt: new Date(result.resetAt),
+      };
+    } catch (error: unknown) {
+      // If the condition check failed, the window expired - reset it
+      if (error instanceof Error && error.message.includes("ConditionalCheckFailed")) {
+        const result = await this.client.updateItem({
+          tableName: this.tableName,
+          key: { PK: key },
+          updateExpression: "SET #count = :one, #resetAt = :resetAt, #ttl = :ttl",
+          expressionAttributeNames: {
+            "#count": "count",
+            "#resetAt": "resetAt",
+            "#ttl": "TTL",
+          },
+          expressionAttributeValues: {
+            ":one": 1,
+            ":resetAt": resetAt.toISOString(),
+            ":ttl": ttlSeconds,
+          },
+        });
+        return {
+          count: result.count,
+          resetAt: new Date(result.resetAt),
+        };
+      }
+      throw error;
+    }
+  }
+}
+
+/**
+ * Interface for DynamoDB operations needed by the rate limit store.
+ * Allows dependency injection and testing without a real DynamoDB connection.
+ */
+export interface DynamoDBRateLimitClient {
+  updateItem(params: {
+    tableName: string;
+    key: Record<string, string>;
+    updateExpression: string;
+    conditionExpression?: string;
+    expressionAttributeNames: Record<string, string>;
+    expressionAttributeValues: Record<string, unknown>;
+  }): Promise<{ count: number; resetAt: string }>;
 }
 
 /**

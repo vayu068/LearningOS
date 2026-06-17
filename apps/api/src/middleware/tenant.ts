@@ -151,3 +151,41 @@ export function validateTenantIsolation(
 ): boolean {
   return requestTenantId === authTenantId;
 }
+
+/**
+ * Enforcement result when tenant isolation check fails.
+ */
+export interface TenantIsolationViolation {
+  statusCode: 403;
+  code: string;
+  message: string;
+}
+
+/**
+ * Enforces tenant isolation by comparing the request's tenant context
+ * against the authenticated user's tenant from the JWT.
+ * Should be called automatically by the handler wrapper rather than
+ * relying on individual handlers to call it.
+ *
+ * @returns null if isolation check passes, or an error object if violated.
+ */
+export function enforceTenantIsolation(
+  requestTenantId: string | undefined,
+  authTenantId: string
+): TenantIsolationViolation | null {
+  if (!requestTenantId) {
+    // If no request tenant ID is provided, isolation cannot be checked.
+    // Allow the request through - the handler will use the auth tenant ID.
+    return null;
+  }
+
+  if (!validateTenantIsolation(requestTenantId, authTenantId)) {
+    return {
+      statusCode: 403,
+      code: "TENANT_ISOLATION_VIOLATION",
+      message: "Access denied: request tenant does not match authenticated tenant",
+    };
+  }
+
+  return null;
+}

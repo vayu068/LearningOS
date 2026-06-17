@@ -4,9 +4,9 @@ export * from "./types";
 // Provider abstraction
 export { AIProviderRegistry } from "./providers/base";
 export type { AIProvider, AIProviderFactory } from "./providers/base";
-export { BedrockProvider } from "./providers/bedrock";
+export { BedrockProvider, BedrockNotConfiguredError } from "./providers/bedrock";
 export type { BedrockConfig, BedrockRuntimeClient } from "./providers/bedrock";
-export { OpenAIProvider } from "./providers/openai";
+export { OpenAIProvider, OpenAINotConfiguredError } from "./providers/openai";
 export type { OpenAIConfig, OpenAIHttpClient } from "./providers/openai";
 
 // Adaptive learning engine

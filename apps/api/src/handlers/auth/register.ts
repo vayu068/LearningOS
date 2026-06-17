@@ -144,6 +144,13 @@ export function createRegisterHandler(deps: RegisterDependencies) {
   };
 }
 
+/**
+ * Roles allowed for self-registration.
+ * Privileged roles (super_admin, tenant_admin, governance, principal)
+ * must be assigned by an administrator through a separate endpoint.
+ */
+const SELF_REGISTRATION_ALLOWED_ROLES: readonly string[] = ["student", "teacher", "parent"];
+
 function validateRegisterRequest(request: RegisterRequest): string[] {
   const errors: string[] = [];
 
@@ -164,6 +171,10 @@ function validateRegisterRequest(request: RegisterRequest): string[] {
   }
   if (!request.role) {
     errors.push("role is required");
+  } else if (!SELF_REGISTRATION_ALLOWED_ROLES.includes(request.role)) {
+    errors.push(
+      `Role "${request.role}" is not allowed for self-registration. Allowed roles: ${SELF_REGISTRATION_ALLOWED_ROLES.join(", ")}`
+    );
   }
 
   return errors;

@@ -6,6 +6,7 @@
 import type { APIGatewayProxyEvent } from "aws-lambda";
 import type { TenantContext, UserRole, DecodedToken } from "@learning-os/shared";
 import { ROLE_PERMISSIONS } from "@learning-os/shared";
+import { extractTenantIdentifier, enforceTenantIsolation } from "./tenant";
 
 /**
  * Authenticated request context extracted from the JWT token.
@@ -134,6 +135,22 @@ export async function authenticateRequest(
         statusCode: 403,
         code: "INVALID_TENANT",
         message: "Tenant not found or disabled",
+      },
+    };
+  }
+
+  // Enforce tenant isolation: compare the tenant from the request (header/subdomain/path)
+  // against the authenticated user's tenant from the JWT
+  const requestIdentifier = extractTenantIdentifier(event);
+  const requestTenantId = requestIdentifier.tenantId;
+  const isolationViolation = enforceTenantIsolation(requestTenantId, tenantId);
+  if (isolationViolation) {
+    return {
+      success: false,
+      error: {
+        statusCode: isolationViolation.statusCode,
+        code: isolationViolation.code,
+        message: isolationViolation.message,
       },
     };
   }

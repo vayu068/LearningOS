@@ -115,13 +115,29 @@ class ApiClient {
 
     for (const request of queue) {
       try {
-        await fetch(request.url, {
+        const response = await fetch(request.url, {
           method: request.method,
           headers: request.headers,
           body: request.body,
         });
+
+        if (response.ok) {
+          // Success - mutation processed
+          continue;
+        } else if (response.status >= 400 && response.status < 500) {
+          // Client error (4xx): permanently failed (conflict, stale data, forbidden).
+          // Do NOT re-queue - the request will never succeed without user intervention.
+          console.warn(
+            `Offline sync: permanently failed mutation removed (${response.status}):`,
+            request.url
+          );
+          continue;
+        } else {
+          // Server error (5xx): transient, re-queue for later retry
+          this.offlineQueue.push(request);
+        }
       } catch {
-        // Re-queue failed requests
+        // Network error - re-queue for retry when connectivity returns
         this.offlineQueue.push(request);
       }
     }

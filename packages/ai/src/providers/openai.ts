@@ -129,10 +129,23 @@ export class OpenAIProvider implements AIProvider {
   }
 
   /**
-   * Check if OpenAI is available by verifying config.
+   * Check if OpenAI is available and properly configured.
+   * Verifies API key is set and the HTTP client is not a placeholder.
    */
   async isAvailable(): Promise<boolean> {
-    return !!this.config.apiKey && this.config.apiKey.length > 0;
+    if (!this.config.apiKey || this.config.apiKey.length === 0) {
+      return false;
+    }
+    // Verify the HTTP client is not a placeholder
+    try {
+      await this.httpClient.post("", {}, {});
+    } catch (error) {
+      if (error instanceof OpenAINotConfiguredError) {
+        return false;
+      }
+      // Any other error means a real client is present
+    }
+    return true;
   }
 
   private buildRequestBody(prompt: AIPrompt): Record<string, unknown> {
@@ -204,17 +217,31 @@ export class OpenAIProvider implements AIProvider {
 }
 
 /**
+ * Error indicating that the OpenAI provider is not configured.
+ */
+export class OpenAINotConfiguredError extends Error {
+  public readonly code = "PROVIDER_NOT_CONFIGURED";
+  constructor() {
+    super(
+      `OpenAI provider is not configured. Provide a custom httpClient (e.g., using fetch or axios) ` +
+      `and a valid API key. Call provider.isAvailable() before invoking AI operations.`
+    );
+    this.name = "OpenAINotConfiguredError";
+  }
+}
+
+/**
  * Default HTTP client placeholder.
  * In production, use fetch or axios.
  */
 function createDefaultHttpClient(): OpenAIHttpClient {
   return {
     post: async () => {
-      throw new Error("OpenAI HTTP client not configured. Provide a custom httpClient.");
+      throw new OpenAINotConfiguredError();
     },
     // eslint-disable-next-line require-yield
     postStream: async function* (): AsyncGenerator<OpenAIStreamEvent> {
-      throw new Error("OpenAI streaming HTTP client not configured.");
+      throw new OpenAINotConfiguredError();
     },
   };
 }

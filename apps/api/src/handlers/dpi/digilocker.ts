@@ -4,6 +4,49 @@
  */
 
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { createHmac } from "crypto";
+
+/**
+ * Secret used for HMAC-SHA256 signing of OAuth state parameters.
+ * In production, this should be injected from AWS Secrets Manager or environment.
+ */
+const STATE_SIGNING_SECRET = process.env.DIGILOCKER_STATE_SECRET || "default-state-secret-change-in-production";
+
+/**
+ * Signs an OAuth state payload with HMAC-SHA256 to prevent forgery.
+ */
+export function signState(payload: string): string {
+  const signature = createHmac("sha256", STATE_SIGNING_SECRET)
+    .update(payload)
+    .digest("base64url");
+  return `${payload}.${signature}`;
+}
+
+/**
+ * Verifies and extracts a signed OAuth state parameter.
+ * Returns null if the signature is invalid.
+ */
+export function verifySignedState(signedState: string): string | null {
+  const lastDotIndex = signedState.lastIndexOf(".");
+  if (lastDotIndex === -1) return null;
+
+  const payload = signedState.slice(0, lastDotIndex);
+  const providedSignature = signedState.slice(lastDotIndex + 1);
+
+  const expectedSignature = createHmac("sha256", STATE_SIGNING_SECRET)
+    .update(payload)
+    .digest("base64url");
+
+  // Constant-time comparison to prevent timing attacks
+  if (providedSignature.length !== expectedSignature.length) return null;
+  let mismatch = 0;
+  for (let i = 0; i < providedSignature.length; i++) {
+    mismatch |= providedSignature.charCodeAt(i) ^ expectedSignature.charCodeAt(i);
+  }
+  if (mismatch !== 0) return null;
+
+  return payload;
+}
 
 /**
  * GET /dpi/digilocker/authorize - Initiate DigiLocker OAuth2 flow
@@ -26,10 +69,11 @@ export async function authorize(
       };
     }
 
-    // Generate state parameter for CSRF protection
-    const state = Buffer.from(
+    // Generate state parameter for CSRF protection with HMAC-SHA256 signature
+    const statePayload = Buffer.from(
       JSON.stringify({ userId, tenantId, timestamp: Date.now() })
     ).toString("base64url");
+    const state = signState(statePayload);
 
     // In production, this would use DigiLockerService.getAuthorizationUrl
     const authorizationUrl = `https://digilocker.gov.in/public/oauth2/1/authorize?client_id=APP_CLIENT_ID&redirect_uri=${encodeURIComponent("https://platform.gov.in/dpi/digilocker/callback")}&response_type=code&state=${state}&scope=openid+docs:pull+docs:verify`;
@@ -65,17 +109,29 @@ export async function callback(
       };
     }
 
-    // Validate state parameter
+    // Validate state parameter HMAC signature
+    const verifiedPayload = verifySignedState(state);
+    if (!verifiedPayload) {
+      return {
+        statusCode: 400,
+        headers: corsHeaders(),
+        body: JSON.stringify({
+          error: "INVALID_STATE",
+          message: "Invalid state parameter: signature verification failed",
+        }),
+      };
+    }
+
     let stateData: { userId: string; tenantId: string; timestamp: number };
     try {
-      stateData = JSON.parse(Buffer.from(state, "base64url").toString());
+      stateData = JSON.parse(Buffer.from(verifiedPayload, "base64url").toString());
     } catch {
       return {
         statusCode: 400,
         headers: corsHeaders(),
         body: JSON.stringify({
           error: "INVALID_STATE",
-          message: "Invalid state parameter",
+          message: "Invalid state parameter: malformed payload",
         }),
       };
     }

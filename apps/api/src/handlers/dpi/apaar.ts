@@ -4,6 +4,82 @@
  */
 
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import type { ConsentArtifact, ConsentPurpose, DataCategory } from "@learning-os/shared";
+import { ConsentManager } from "@learning-os/shared";
+
+/**
+ * Interface for consent store lookup.
+ */
+export interface ConsentStore {
+  getConsent(consentId: string): Promise<ConsentArtifact | null>;
+}
+
+/** Default consent manager instance for verification */
+const consentManager = new ConsentManager({
+  defaultExpiryDays: 365,
+  requireGuardianConsent: true,
+  minimumConsentAge: 18,
+  supportedNoticeVersions: ["1.0", "1.1"],
+  dpaReference: "DPDP-2023",
+});
+
+/**
+ * Placeholder consent store. In production, inject a real DynamoDB-backed store.
+ */
+let _consentStore: ConsentStore | null = null;
+
+/**
+ * Sets the consent store implementation (for dependency injection / testing).
+ */
+export function setConsentStore(store: ConsentStore): void {
+  _consentStore = store;
+}
+
+/**
+ * Verifies that a consent ID references an active, valid consent artifact.
+ */
+async function verifyConsent(
+  consentId: string,
+  purpose: ConsentPurpose,
+  dataCategory: DataCategory
+): Promise<APIGatewayProxyResult | null> {
+  if (!_consentStore) {
+    return {
+      statusCode: 503,
+      headers: corsHeaders(),
+      body: JSON.stringify({
+        error: "CONSENT_VERIFICATION_UNAVAILABLE",
+        message: "Consent verification service is not available. Contact support.",
+      }),
+    };
+  }
+
+  const consent = await _consentStore.getConsent(consentId);
+  if (!consent) {
+    return {
+      statusCode: 403,
+      headers: corsHeaders(),
+      body: JSON.stringify({
+        error: "INVALID_CONSENT",
+        message: "The provided consent ID does not reference a valid consent artifact",
+      }),
+    };
+  }
+
+  const verification = consentManager.verifyConsentForProcessing(consent, purpose, dataCategory);
+  if (!verification.isValid) {
+    return {
+      statusCode: 403,
+      headers: corsHeaders(),
+      body: JSON.stringify({
+        error: "CONSENT_VERIFICATION_FAILED",
+        message: verification.reason || "Consent verification failed",
+      }),
+    };
+  }
+
+  return null;
+}
 
 /**
  * POST /dpi/apaar/verify - Verify a student's APAAR ID
@@ -36,6 +112,12 @@ export async function verifyStudent(
           message: "APAAR ID must be a 12-digit numeric string",
         }),
       };
+    }
+
+    // Verify the consent artifact is active and covers personal identity verification
+    const consentError = await verifyConsent(consentId, "dpi_integration", "personal_identity");
+    if (consentError) {
+      return consentError;
     }
 
     const institutionId = event.requestContext.authorizer?.claims?.["custom:institutionId"];
@@ -97,6 +179,12 @@ export async function getProfile(
       };
     }
 
+    // Verify the consent artifact is active and covers personal identity access
+    const consentError = await verifyConsent(consentId, "dpi_integration", "personal_identity");
+    if (consentError) {
+      return consentError;
+    }
+
     // In production, this would call APAARService.fetchProfile
     const profile = {
       apaarId,
@@ -138,6 +226,12 @@ export async function updateEnrollment(
           message: "apaarId, academicLevel, programName, and consentId are required",
         }),
       };
+    }
+
+    // Verify the consent artifact is active and covers academic records updates
+    const consentError = await verifyConsent(consentId, "dpi_integration", "academic_records");
+    if (consentError) {
+      return consentError;
     }
 
     const result = {

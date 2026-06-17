@@ -17,6 +17,10 @@ export class DatabaseStack extends cdk.Stack {
     super(scope, id, props);
 
     // Single-table design for multi-tenant data
+    // Production uses PROVISIONED mode with auto-scaling for cost predictability.
+    // Non-production environments use PAY_PER_REQUEST for simplicity.
+    const isProduction = props.stage === "prod";
+
     this.table = new dynamodb.Table(this, "MainTable", {
       tableName: `learning-os-${props.stage}`,
       partitionKey: {
@@ -27,7 +31,11 @@ export class DatabaseStack extends cdk.Stack {
         name: "SK",
         type: dynamodb.AttributeType.STRING,
       },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      billingMode: isProduction
+        ? dynamodb.BillingMode.PROVISIONED
+        : dynamodb.BillingMode.PAY_PER_REQUEST,
+      readCapacity: isProduction ? 5 : undefined,
+      writeCapacity: isProduction ? 5 : undefined,
       removalPolicy:
         props.stage === "prod" ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
       pointInTimeRecovery: true,
@@ -106,8 +114,8 @@ export class DatabaseStack extends cdk.Stack {
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
-    // Auto-scaling for provisioned mode in production
-    if (props.stage === "prod") {
+    // Auto-scaling for provisioned capacity in production
+    if (isProduction) {
       const readScaling = this.table.autoScaleReadCapacity({
         minCapacity: 5,
         maxCapacity: 1000,
@@ -126,7 +134,7 @@ export class DatabaseStack extends cdk.Stack {
     }
 
     // Aurora Serverless v2 for analytics queries (production only)
-    if (props.stage === "prod" && props.vpc) {
+    if (isProduction && props.vpc) {
       const dbSecurityGroup = new ec2.SecurityGroup(this, "AnalyticsDbSG", {
         vpc: props.vpc,
         description: "Security group for Aurora analytics database",

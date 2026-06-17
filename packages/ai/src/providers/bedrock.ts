@@ -101,11 +101,25 @@ export class BedrockProvider implements AIProvider {
   }
 
   /**
-   * Check if Bedrock is available.
+   * Check if Bedrock is available and properly configured.
+   * Returns false when using the placeholder client.
    */
   async isAvailable(): Promise<boolean> {
     try {
-      return this.config.region != null && this.config.region.length > 0;
+      if (!this.config.region || this.config.region.length === 0) {
+        return false;
+      }
+      // Verify the client is not a placeholder by checking for the error class
+      const client = this.getClient();
+      try {
+        await client.invokeModel({ modelId: "ping", contentType: "text/plain", body: "" });
+      } catch (error) {
+        if (error instanceof BedrockNotConfiguredError) {
+          return false;
+        }
+        // Any other error means the real client is present (e.g., auth error, invalid model)
+      }
+      return true;
     } catch {
       return false;
     }
@@ -204,22 +218,36 @@ export interface BedrockRuntimeClient {
 }
 
 /**
+ * Error indicating that the AI provider is not configured.
+ * Consumers should check `isAvailable()` before calling provider methods,
+ * or handle this error gracefully to show "AI not configured" to end users.
+ */
+export class BedrockNotConfiguredError extends Error {
+  public readonly code = "PROVIDER_NOT_CONFIGURED";
+  constructor(region: string) {
+    super(
+      `Bedrock provider is not configured. Install @aws-sdk/client-bedrock-runtime and configure AWS credentials for region: ${region}. ` +
+      `Call provider.isAvailable() before invoking AI operations.`
+    );
+    this.name = "BedrockNotConfiguredError";
+  }
+}
+
+/**
  * Factory function to create a Bedrock Runtime client.
- * Can be replaced with a mock for testing.
+ * Returns a placeholder client that raises a descriptive error when invoked.
+ * In production, replace this with the real @aws-sdk/client-bedrock-runtime client
+ * via dependency injection (constructor parameter).
  */
 export function createBedrockRuntimeClient(config: { region: string }): BedrockRuntimeClient {
   // This would use @aws-sdk/client-bedrock-runtime in production.
   // The interface above allows easy mocking for tests.
   return {
     invokeModel: async () => {
-      throw new Error(
-        `Bedrock client not initialized. Configure AWS SDK with region: ${config.region}`
-      );
+      throw new BedrockNotConfiguredError(config.region);
     },
     invokeModelWithResponseStream: async () => {
-      throw new Error(
-        `Bedrock streaming client not initialized. Configure AWS SDK with region: ${config.region}`
-      );
+      throw new BedrockNotConfiguredError(config.region);
     },
   };
 }
