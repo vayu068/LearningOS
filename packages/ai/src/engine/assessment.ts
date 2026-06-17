@@ -11,7 +11,6 @@ import type {
   AssessmentResult,
   BloomsTaxonomyLevel,
   ContentDifficulty,
-  AssessmentRubric,
 } from "../types";
 
 export interface AssessmentConfig {

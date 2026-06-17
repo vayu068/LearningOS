@@ -41,12 +41,14 @@ export class MonitoringStack extends cdk.Stack {
       retention: isProd ? logs.RetentionDays.SIX_MONTHS : logs.RetentionDays.ONE_WEEK,
       removalPolicy: isProd ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
     });
+    void aiLogGroup;
 
     const dpiLogGroup = new logs.LogGroup(this, "DpiLogGroup", {
       logGroupName: `/learning-os/${props.stage}/dpi`,
       retention: isProd ? logs.RetentionDays.TWO_YEARS : logs.RetentionDays.ONE_MONTH,
       removalPolicy: isProd ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
     });
+    void dpiLogGroup;
 
     const auditLogGroup = new logs.LogGroup(this, "AuditLogGroup", {
       logGroupName: `/learning-os/${props.stage}/audit`,
@@ -63,6 +65,7 @@ export class MonitoringStack extends cdk.Stack {
       filterPattern: logs.FilterPattern.literal("ERROR"),
       metricValue: "1",
     });
+    void errorMetricFilter;
 
     const latencyMetricFilter = new logs.MetricFilter(this, "LatencyMetricFilter", {
       logGroup: apiLogGroup,
@@ -71,6 +74,7 @@ export class MonitoringStack extends cdk.Stack {
       filterPattern: logs.FilterPattern.exists("$.duration"),
       metricValue: "$.duration",
     });
+    void latencyMetricFilter;
 
     // === Alarms ===
 
@@ -129,7 +133,7 @@ export class MonitoringStack extends cdk.Stack {
     dlqAlarm.addAlarmAction(new actions.SnsAction(this.alarmTopic));
 
     // Cognito Sign-in Failures Alarm
-    const authFailureAlarm = new cloudwatch.Alarm(this, "AuthFailureAlarm", {
+    new cloudwatch.Alarm(this, "AuthFailureAlarm", {
       alarmName: `learning-os-${props.stage}-auth-failures`,
       alarmDescription: "Excessive authentication failures (possible brute force)",
       metric: new cloudwatch.Metric({

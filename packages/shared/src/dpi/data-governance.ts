@@ -319,11 +319,12 @@ export class DataGovernanceService {
     dataCategory: DataCategory
   ): { allowed: boolean; basis: string } {
     // Legitimate interests that don't require consent per DPDP Section 7
-    const legitimateInterests: Record<string, ConsentPurpose[]> = {
+    const _legitimateInterests: Record<string, ConsentPurpose[]> = {
       education_delivery: ["education_delivery"],
       legal_obligation: ["assessment"],
       vital_interests: [],
     };
+    void _legitimateInterests;
 
     // State-mandated educational data can be processed without explicit consent
     if (

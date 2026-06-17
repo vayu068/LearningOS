@@ -65,13 +65,13 @@ const aiStack = new AiStack(app, `LearningOS-Ai-${stage}`, {
 aiStack.addDependency(networkStack);
 
 // Messaging stack (SQS, SNS, DLQ)
-const messagingStack = new MessagingStack(app, `LearningOS-Messaging-${stage}`, {
+new MessagingStack(app, `LearningOS-Messaging-${stage}`, {
   env,
   stage,
 });
 
 // Monitoring stack (CloudWatch, alarms, dashboards)
-const monitoringStack = new MonitoringStack(app, `LearningOS-Monitoring-${stage}`, {
+new MonitoringStack(app, `LearningOS-Monitoring-${stage}`, {
   env,
   stage,
 });

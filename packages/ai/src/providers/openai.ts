@@ -212,7 +212,8 @@ function createDefaultHttpClient(): OpenAIHttpClient {
     post: async () => {
       throw new Error("OpenAI HTTP client not configured. Provide a custom httpClient.");
     },
-    postStream: async function* () {
+    // eslint-disable-next-line require-yield
+    postStream: async function* (): AsyncGenerator<OpenAIStreamEvent> {
       throw new Error("OpenAI streaming HTTP client not configured.");
     },
   };

@@ -99,7 +99,7 @@ export class AdaptiveLearningEngine {
   async adaptPath(
     currentPath: LearningPath,
     performance: StudentPerformance,
-    studentProfile: StudentProfile
+    _studentProfile: StudentProfile
   ): Promise<LearningPath> {
     const updatedNodes = [...currentPath.nodes];
     const nodeIndex = updatedNodes.findIndex((n) => n.id === performance.nodeId);

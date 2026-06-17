@@ -57,7 +57,7 @@ export class ApiStack extends cdk.Stack {
     });
 
     // Default stage with access logging and throttling
-    const defaultStage = new apigateway.CfnStage(this, "DefaultStage", {
+    new apigateway.CfnStage(this, "DefaultStage", {
       apiId: this.httpApi.ref,
       stageName: "$default",
       autoDeploy: true,

@@ -11,7 +11,6 @@ import type {
   TutorSessionState,
   TutorConversationMessage,
   SupportedLanguage,
-  BloomsTaxonomyLevel,
 } from "../types";
 
 export interface TutorServiceConfig {

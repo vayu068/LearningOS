@@ -166,7 +166,7 @@ export class AuthStack extends cdk.Stack {
     });
 
     // Resource server for custom scopes
-    const resourceServer = this.userPool.addResourceServer("ResourceServer", {
+    this.userPool.addResourceServer("ResourceServer", {
       identifier: "learning-os-api",
       userPoolResourceServerName: "LearningOS API",
       scopes: [

@@ -5,7 +5,7 @@
 
 import type { APIGatewayProxyEvent } from "aws-lambda";
 import type { TenantContext, UserRole, DecodedToken } from "@learning-os/shared";
-import { ROLE_PERMISSIONS, RolePermission } from "@learning-os/shared";
+import { ROLE_PERMISSIONS } from "@learning-os/shared";
 
 /**
  * Authenticated request context extracted from the JWT token.

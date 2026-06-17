@@ -38,7 +38,6 @@ export async function verifyStudent(
       };
     }
 
-    const tenantId = event.requestContext.authorizer?.claims?.["custom:tenantId"];
     const institutionId = event.requestContext.authorizer?.claims?.["custom:institutionId"];
 
     // In production, this would call the APAARService
