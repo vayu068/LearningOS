@@ -1,0 +1,22 @@
+{
+  "id": "FEAT-001",
+  "type": "docs",
+  "description": "Create a comprehensive architecture diagram document (docs/ARCHITECTURE-DIAGRAM.md) detailing all system layers, components, data flows, and integrations. Also produce a thorough security audit report (docs/SECURITY-AUDIT.md) covering authentication, authorization, multi-tenancy, DPI integration security, encryption, rate limiting, infrastructure security controls, and compliance posture.",
+  "status": "in_progress",
+  "steps": [
+    "Create docs/ARCHITECTURE-DIAGRAM.md with detailed ASCII/Mermaid diagrams covering: (1) High-level system architecture showing all 8 CDK stacks and their relationships, (2) Data flow diagrams for auth, learning, DPI, and AI subsystems, (3) Multi-tenant isolation architecture, (4) Network topology (VPC, subnets, security groups, VPC endpoints), (5) Messaging architecture (SQS queues, SNS topics, DLQs), (6) Storage architecture (S3 buckets, DynamoDB single-table design, Aurora analytics), (7) AI/ML pipeline (Bedrock, SageMaker, Lambda orchestration), (8) CDN and content delivery architecture, (9) Component inventory table for each package/app",
+    "Create docs/SECURITY-AUDIT.md with a detailed security analysis covering: (1) Authentication layer - Cognito User Pool config analysis (MFA, password policy, token validity, Lambda triggers), (2) Authorization - RBAC implementation review (role-based permissions, resource matching logic), (3) Multi-tenant isolation - analysis of tenant resolution, enforceTenantIsolation, and JWT tenant claim validation, (4) Rate limiting - per-user and per-tenant limiting, DynamoDB atomic counters vs in-memory store comparison, WAF rules (IP rate limit 2000, tenant throttling 5000), (5) DPI Security - DigiLocker HMAC-SHA256 state signing with constant-time comparison, ABC consent verification enforcement, (6) Encryption - AES-256-GCM implementation review for PII, key derivation from SHA-256, (7) Infrastructure security - VPC flow logs, encryption at rest, S3 block public access, CloudFront TLS 1.2+, (8) API Gateway - CORS config review, access logging format, burst/rate limits, (9) Data governance - DPDP consent lifecycle, audit logging, data retention policies, (10) Identified vulnerabilities and recommendations"
+  ],
+  "acceptance_criteria": [
+    "docs/ARCHITECTURE-DIAGRAM.md exists with Mermaid diagrams covering all 8 infrastructure stacks",
+    "docs/SECURITY-AUDIT.md exists with detailed findings for auth, multi-tenancy, DPI, encryption, rate limiting, and infrastructure",
+    "Security audit identifies at least 3 potential improvements/findings",
+    "Architecture diagram includes data flow between all major components"
+  ],
+  "verification": [
+    "Confirm both files exist and contain substantive content (not placeholder)",
+    "Verify Mermaid diagram syntax by checking for graph/flowchart/sequenceDiagram blocks"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

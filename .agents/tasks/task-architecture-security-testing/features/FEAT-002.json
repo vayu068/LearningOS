@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Create a headless testable version of the app by building a lightweight mock server (Express) that serves the Next.js static pages and provides mock API endpoints matching the E2E test expectations, then configure Playwright to run headless against this mock server and execute the full test suite.",
+  "status": "pending",
+  "steps": [
+    "Create tests/mock-server/ directory with a lightweight Express server that: (1) Serves the Next.js app pages (static HTML with proper routes for /auth/login, /auth/register, /dashboard, /learn, /assessments, /profile, /settings/dpi, /admin/*, /analytics, /communication, /content/create, /auth/forgot-password), (2) Provides mock API endpoints for /api/auth/login, /api/auth/register, /api/dpi/digilocker/authorize, /api/dpi/abc/account/:id, (3) Returns appropriate HTML with the expected DOM elements that tests look for (data-testid attributes, ARIA landmarks, form labels, headings)",
+    "The mock server HTML responses must include: proper heading hierarchy (h1 for pages), form inputs with labels (email, password), buttons with accessible names, data-testid attributes (progress-chart, tutor-chat, assessment-question, assessment-timer, user-menu, typing-indicator, suggestions, generated-content, generated-questions, content-editor, content-preview, performance-chart, user-table, date-range-picker, submission-row), nav/main landmarks, and role-based content visibility",
+    "Create tests/playwright-headless.config.ts that extends the base config but: uses only chromium project (for speed), sets the webServer command to start the mock server, uses headless mode explicitly, outputs results to tests/headless-results/",
+    "Add a package.json script or shell script tests/run-headless-tests.sh that starts the mock server and runs Playwright against it",
+    "Install express as a dev dependency in the tests workspace: add it to tests/package.json",
+    "Run the headless tests and capture results, saving the output to tests/headless-results/test-output.txt"
+  ],
+  "acceptance_criteria": [
+    "Mock server starts and responds on localhost with proper HTML pages",
+    "Playwright headless config exists and points to the mock server",
+    "At least the home page tests and some auth tests pass against the mock server",
+    "Test results are captured in tests/headless-results/"
+  ],
+  "verification": [
+    "Start the mock server and verify it responds to HTTP requests",
+    "Run playwright test with the headless config and confirm some tests pass",
+    "Check tests/headless-results/ for output"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
