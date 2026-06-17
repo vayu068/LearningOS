@@ -7,13 +7,16 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "lint": "eslint . --ext .ts --max-warnings 0",
-    "test": "echo \"No tests yet\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "clean": "rm -rf dist .turbo node_modules"
   },
   "dependencies": {
     "@learning-os/shared": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.4.0"
+    "@types/node": "^22.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^4.1.9"
   }
 }

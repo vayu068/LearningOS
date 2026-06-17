@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Implement the AI-powered adaptive learning engine, AI tutor service, and content generation system. This is the core AI layer that powers personalized learning pathways, vernacular tutoring, and automated content creation using AWS Bedrock/OpenAI integration patterns.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create packages/ai/src/types.ts - Comprehensive AI types: LearningPath, KnowledgeGraph, CompetencyLevel, LearningObjective, ContentDifficulty, AdaptiveRule, TutorSession, ContentTemplate",
     "Create packages/ai/src/providers/base.ts - Abstract AI provider interface supporting multiple backends (AWS Bedrock, OpenAI, custom models) with streaming support",
