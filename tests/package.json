@@ -4,13 +4,16 @@
   "private": true,
   "scripts": {
     "test:e2e": "playwright test",
+    "test:e2e:headless": "playwright test --config=playwright-headless.config.ts",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
+    "mock-server": "node mock-server/server.js",
     "build": "echo \"No build needed for tests\"",
     "lint": "echo \"No lint for tests\"",
-    "clean": "rm -rf test-results playwright-report node_modules"
+    "clean": "rm -rf test-results playwright-report headless-results node_modules"
   },
   "devDependencies": {
-    "@playwright/test": "^1.44.0"
+    "@playwright/test": "^1.44.0",
+    "express": "^4.21.0"
   }
 }

@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Create a headless testable version of the app by building a lightweight mock server (Express) that serves the Next.js static pages and provides mock API endpoints matching the E2E test expectations, then configure Playwright to run headless against this mock server and execute the full test suite.",
-  "status": "pending",
+  "status": "completed",
   "steps": [
     "Create tests/mock-server/ directory with a lightweight Express server that: (1) Serves the Next.js app pages (static HTML with proper routes for /auth/login, /auth/register, /dashboard, /learn, /assessments, /profile, /settings/dpi, /admin/*, /analytics, /communication, /content/create, /auth/forgot-password), (2) Provides mock API endpoints for /api/auth/login, /api/auth/register, /api/dpi/digilocker/authorize, /api/dpi/abc/account/:id, (3) Returns appropriate HTML with the expected DOM elements that tests look for (data-testid attributes, ARIA landmarks, form labels, headings)",
     "The mock server HTML responses must include: proper heading hierarchy (h1 for pages), form inputs with labels (email, password), buttons with accessible names, data-testid attributes (progress-chart, tutor-chat, assessment-question, assessment-timer, user-menu, typing-indicator, suggestions, generated-content, generated-questions, content-editor, content-preview, performance-chart, user-table, date-range-picker, submission-row), nav/main landmarks, and role-based content visibility",
@@ -23,5 +23,5 @@
     "Check tests/headless-results/ for output"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 102 E2E tests pass (100% pass rate) against the mock Express server in headless Chromium. The mock server serves 20+ routes matching the test expectations. Required installing system libraries (nspr, nss, libxkbcommon) on Amazon Linux 2023 for Playwright Chromium. The auth-helper.ts clearAuthState function was updated to navigate to baseURL before accessing localStorage (needed because Playwright starts pages on about:blank where localStorage is inaccessible). Test execution time is approximately 11.5 seconds for all 102 tests."
 }

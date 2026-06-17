@@ -82,6 +82,11 @@ export async function setupAuthState(
  * Clears authentication state (logout).
  */
 export async function clearAuthState(page: Page): Promise<void> {
+  // Navigate to a valid page first if on about:blank to enable localStorage access
+  const currentUrl = page.url();
+  if (currentUrl === "about:blank" || currentUrl === "") {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+  }
   await page.evaluate(() => {
     window.localStorage.removeItem("auth_state");
     window.localStorage.removeItem("tenant_context");
