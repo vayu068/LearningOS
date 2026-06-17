@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "Implement the complete frontend application with multi-tenant UI, student dashboard, teacher dashboard, admin/governance dashboard, AI tutor interface, and DPI integration pages. Includes the component library, offline-first capability with service workers, and responsive design for all device sizes.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create packages/ui/src/components/Layout/MainLayout.tsx - Main app layout with responsive sidebar navigation, tenant-branded header, breadcrumbs",
     "Create packages/ui/src/components/Layout/DashboardLayout.tsx - Dashboard-specific layout with widgets grid, filters, date range pickers",
@@ -54,5 +54,5 @@
     "cd /projects/sandbox/LearningOS && pnpm --filter @learning-os/ui test"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Vite 8.x with Rolldown requires `oxc: { jsx: 'automatic' }` in vitest.config.ts for JSX support (the @vitejs/plugin-react is not needed). The vitest.config.ts must be excluded from Next.js tsconfig.json because its type annotations conflict with Next.js types. Test files placed in __tests__/ at project root rather than inside route group directories. All 203 tests pass across packages (37 shared + 57 AI + 82 API + 12 UI + 15 web). Next.js build generates 15 routes including all dashboard pages, auth pages, and API routes."
 }
