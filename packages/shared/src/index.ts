@@ -8,3 +8,6 @@ export * from "./types/dpi";
 export * from "./utils/tenant";
 export * from "./utils/encryption";
 export * from "./utils/consent";
+
+// DPI Integration Services
+export * from "./dpi";

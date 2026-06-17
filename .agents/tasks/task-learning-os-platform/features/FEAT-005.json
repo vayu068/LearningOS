@@ -2,7 +2,7 @@
   "id": "FEAT-005",
   "type": "feat",
   "description": "Implement the AWS CDK infrastructure stacks, DPI integration services, Open API specifications, and comprehensive Playwright E2E tests. This feature completes the platform with production infrastructure definitions, government system integrations, API documentation, and browser-based testing.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create infrastructure/lib/stacks/auth-stack.ts - AWS CDK stack for Cognito User Pool with custom attributes for tenant/role, MFA config, Lambda triggers for custom auth flows, identity pool for federated access",
     "Create infrastructure/lib/stacks/database-stack.ts - DynamoDB tables with single-table design: main table with GSIs for access patterns, TTL for sessions, point-in-time recovery, auto-scaling config. Optional Aurora Serverless v2 for analytics queries",

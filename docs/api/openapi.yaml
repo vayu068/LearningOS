@@ -1,0 +1,1113 @@
+openapi: "3.0.3"
+info:
+  title: LearningOS Platform API
+  description: |
+    Comprehensive API for India's AI-powered adaptive learning platform.
+    Supports multi-tenant operations, DPI integrations (APAAR, DigiLocker, ABC),
+    AI-driven personalization, and DPDP-compliant data governance.
+  version: "1.0.0"
+  contact:
+    name: LearningOS Platform Team
+    email: platform@learning-os.gov.in
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.platform.gov.in/v1
+    description: Production
+  - url: https://staging-api.platform.gov.in/v1
+    description: Staging
+  - url: http://localhost:3001/v1
+    description: Local Development
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Authentication
+    description: User authentication and session management
+  - name: Tenants
+    description: Multi-tenant management
+  - name: Learning
+    description: Learning content and sessions
+  - name: Assessment
+    description: Assessment creation and grading
+  - name: AI
+    description: AI-powered features
+  - name: DPI - APAAR
+    description: APAAR student ID integration
+  - name: DPI - DigiLocker
+    description: DigiLocker document integration
+  - name: DPI - ABC
+    description: Academic Bank of Credits
+  - name: Governance
+    description: Data governance and consent management
+
+paths:
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Authenticate user
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          description: User already exists
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        "200":
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /tenants:
+    get:
+      tags: [Tenants]
+      summary: List tenants (admin only)
+      operationId: listTenants
+      parameters:
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/PageToken"
+      responses:
+        "200":
+          description: List of tenants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenants:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Tenant"
+                  nextPageToken:
+                    type: string
+    post:
+      tags: [Tenants]
+      summary: Create a new tenant
+      operationId: createTenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTenantRequest"
+      responses:
+        "201":
+          description: Tenant created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tenant"
+
+  /tenants/{tenantId}:
+    get:
+      tags: [Tenants]
+      summary: Get tenant details
+      operationId: getTenant
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Tenant details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tenant"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /learning/sessions:
+    post:
+      tags: [Learning]
+      summary: Start a new learning session
+      operationId: createLearningSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionRequest"
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LearningSession"
+
+  /learning/sessions/{sessionId}:
+    get:
+      tags: [Learning]
+      summary: Get session details
+      operationId: getSession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Session details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LearningSession"
+
+  /assessments:
+    post:
+      tags: [Assessment]
+      summary: Create a new assessment
+      operationId: createAssessment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAssessmentRequest"
+      responses:
+        "201":
+          description: Assessment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assessment"
+
+  /assessments/{assessmentId}/submit:
+    post:
+      tags: [Assessment]
+      summary: Submit assessment answers
+      operationId: submitAssessment
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssessmentSubmission"
+      responses:
+        "200":
+          description: Assessment submitted and graded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssessmentResult"
+
+  /ai/tutor/chat:
+    post:
+      tags: [AI]
+      summary: Send message to AI tutor
+      operationId: chatWithTutor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TutorChatRequest"
+      responses:
+        "200":
+          description: AI tutor response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorChatResponse"
+
+  /ai/content/generate:
+    post:
+      tags: [AI]
+      summary: Generate learning content using AI
+      operationId: generateContent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentGenerationRequest"
+      responses:
+        "202":
+          description: Content generation started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                  status:
+                    type: string
+                    enum: [queued, processing]
+
+  /dpi/apaar/verify:
+    post:
+      tags: [DPI - APAAR]
+      summary: Verify student APAAR ID
+      operationId: verifyApaar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/APAARVerifyRequest"
+      responses:
+        "200":
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APAARVerifyResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /dpi/apaar/profile/{apaarId}:
+    get:
+      tags: [DPI - APAAR]
+      summary: Get APAAR profile
+      operationId: getApaarProfile
+      parameters:
+        - name: apaarId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^\\d{12}$"
+        - $ref: "#/components/parameters/ConsentId"
+      responses:
+        "200":
+          description: APAAR profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APAARProfile"
+        "403":
+          description: Consent required
+
+  /dpi/digilocker/authorize:
+    get:
+      tags: [DPI - DigiLocker]
+      summary: Get DigiLocker authorization URL
+      operationId: digilockerAuthorize
+      responses:
+        "200":
+          description: Authorization URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authorizationUrl:
+                    type: string
+                    format: uri
+                  state:
+                    type: string
+
+  /dpi/digilocker/callback:
+    post:
+      tags: [DPI - DigiLocker]
+      summary: Handle DigiLocker OAuth callback
+      operationId: digilockerCallback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, state]
+              properties:
+                code:
+                  type: string
+                state:
+                  type: string
+      responses:
+        "200":
+          description: DigiLocker linked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  digiLockerId:
+                    type: string
+                  linkedAt:
+                    type: string
+                    format: date-time
+
+  /dpi/digilocker/documents/pull:
+    post:
+      tags: [DPI - DigiLocker]
+      summary: Pull documents from DigiLocker
+      operationId: pullDigilockerDocuments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DigiLockerPullRequest"
+      responses:
+        "200":
+          description: Documents retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  documents:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DigiLockerDocument"
+
+  /dpi/abc/credits/deposit:
+    post:
+      tags: [DPI - ABC]
+      summary: Deposit credits to ABC account
+      operationId: depositCredits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreditDepositRequest"
+      responses:
+        "200":
+          description: Credits deposited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditDepositResponse"
+
+  /dpi/abc/credits/transfer:
+    post:
+      tags: [DPI - ABC]
+      summary: Transfer credits between institutions
+      operationId: transferCredits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreditTransferRequest"
+      responses:
+        "200":
+          description: Transfer initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditTransferResponse"
+
+  /governance/consent:
+    post:
+      tags: [Governance]
+      summary: Collect user consent
+      operationId: collectConsent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsentCollectionRequest"
+      responses:
+        "201":
+          description: Consent recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsentArtifact"
+    get:
+      tags: [Governance]
+      summary: Get active consents for current user
+      operationId: getConsents
+      responses:
+        "200":
+          description: Active consents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  consents:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ConsentArtifact"
+
+  /governance/consent/{consentId}/withdraw:
+    post:
+      tags: [Governance]
+      summary: Withdraw consent
+      operationId: withdrawConsent
+      parameters:
+        - name: consentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsentWithdrawalRequest"
+      responses:
+        "200":
+          description: Consent withdrawn
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsentArtifact"
+
+  /governance/dsar:
+    post:
+      tags: [Governance]
+      summary: Submit a Data Subject Access Request
+      operationId: submitDSAR
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DSARRequest"
+      responses:
+        "202":
+          description: DSAR request accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DSARResult"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    TenantId:
+      name: tenantId
+      in: path
+      required: true
+      schema:
+        type: string
+    PageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        default: 20
+        maximum: 100
+    PageToken:
+      name: pageToken
+      in: query
+      schema:
+        type: string
+    ConsentId:
+      name: X-Consent-Id
+      in: header
+      required: true
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+    LoginRequest:
+      type: object
+      required: [email, password, tenantId]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        tenantId:
+          type: string
+
+    RegisterRequest:
+      type: object
+      required: [email, password, fullName, tenantId, role]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        fullName:
+          type: string
+        tenantId:
+          type: string
+        role:
+          type: string
+          enum: [student, teacher, admin]
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+        user:
+          $ref: "#/components/schemas/UserProfile"
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        fullName:
+          type: string
+        role:
+          type: string
+        tenantId:
+          type: string
+        apaarId:
+          type: string
+
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        subdomain:
+          type: string
+        plan:
+          type: string
+          enum: [free, standard, premium, enterprise]
+        settings:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateTenantRequest:
+      type: object
+      required: [name, subdomain, plan]
+      properties:
+        name:
+          type: string
+        subdomain:
+          type: string
+        plan:
+          type: string
+          enum: [free, standard, premium, enterprise]
+        settings:
+          type: object
+
+    CreateSessionRequest:
+      type: object
+      required: [subjectId, topicId]
+      properties:
+        subjectId:
+          type: string
+        topicId:
+          type: string
+        preferredLanguage:
+          type: string
+          default: en
+        learningStyle:
+          type: string
+          enum: [visual, auditory, kinesthetic, reading]
+
+    LearningSession:
+      type: object
+      properties:
+        id:
+          type: string
+        subjectId:
+          type: string
+        topicId:
+          type: string
+        status:
+          type: string
+          enum: [active, paused, completed]
+        startedAt:
+          type: string
+          format: date-time
+        content:
+          type: array
+          items:
+            type: object
+
+    CreateAssessmentRequest:
+      type: object
+      required: [title, type, subjectId]
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+          enum: [quiz, exam, assignment, practice]
+        subjectId:
+          type: string
+        questions:
+          type: array
+          items:
+            type: object
+        duration:
+          type: integer
+          description: Duration in minutes
+        aiGenerated:
+          type: boolean
+          default: false
+
+    Assessment:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        questions:
+          type: array
+          items:
+            type: object
+        createdAt:
+          type: string
+          format: date-time
+
+    AssessmentSubmission:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: array
+          items:
+            type: object
+            properties:
+              questionId:
+                type: string
+              answer:
+                type: string
+
+    AssessmentResult:
+      type: object
+      properties:
+        assessmentId:
+          type: string
+        score:
+          type: number
+        totalMarks:
+          type: number
+        passed:
+          type: boolean
+        feedback:
+          type: string
+        gradedAt:
+          type: string
+          format: date-time
+
+    TutorChatRequest:
+      type: object
+      required: [message, sessionId]
+      properties:
+        message:
+          type: string
+        sessionId:
+          type: string
+        context:
+          type: object
+          properties:
+            subjectId:
+              type: string
+            topicId:
+              type: string
+            difficulty:
+              type: string
+
+    TutorChatResponse:
+      type: object
+      properties:
+        response:
+          type: string
+        suggestions:
+          type: array
+          items:
+            type: string
+        resources:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              url:
+                type: string
+              title:
+                type: string
+
+    ContentGenerationRequest:
+      type: object
+      required: [subjectId, topicId, contentType]
+      properties:
+        subjectId:
+          type: string
+        topicId:
+          type: string
+        contentType:
+          type: string
+          enum: [lesson, quiz, summary, flashcards]
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        language:
+          type: string
+          default: en
+
+    APAARVerifyRequest:
+      type: object
+      required: [apaarId, studentName, dateOfBirth, consentId]
+      properties:
+        apaarId:
+          type: string
+          pattern: "^\\d{12}$"
+        studentName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        consentId:
+          type: string
+
+    APAARVerifyResponse:
+      type: object
+      properties:
+        verified:
+          type: boolean
+        status:
+          type: string
+          enum: [verified, pending, rejected, expired]
+        referenceId:
+          type: string
+        verifiedAt:
+          type: string
+          format: date-time
+        profile:
+          $ref: "#/components/schemas/APAARProfile"
+
+    APAARProfile:
+      type: object
+      properties:
+        apaarId:
+          type: string
+        studentName:
+          type: string
+        dateOfBirth:
+          type: string
+        gender:
+          type: string
+          enum: [male, female, other]
+        institutionId:
+          type: string
+        academicLevel:
+          type: string
+        verificationStatus:
+          type: string
+
+    DigiLockerPullRequest:
+      type: object
+      required: [documentType, consentId]
+      properties:
+        documentType:
+          type: string
+          enum: [marksheet, certificate, degree, transfer_certificate, migration_certificate, identity_document]
+        consentId:
+          type: string
+        issuerUri:
+          type: string
+
+    DigiLockerDocument:
+      type: object
+      properties:
+        documentUri:
+          type: string
+        documentType:
+          type: string
+        issuer:
+          type: string
+        issuedAt:
+          type: string
+          format: date-time
+        name:
+          type: string
+        verificationHash:
+          type: string
+
+    CreditDepositRequest:
+      type: object
+      required: [abcId, apaarId, credits, academicSession, consentId]
+      properties:
+        abcId:
+          type: string
+        apaarId:
+          type: string
+        credits:
+          type: array
+          items:
+            type: object
+            required: [courseId, credits, grade]
+            properties:
+              courseId:
+                type: string
+              credits:
+                type: number
+              grade:
+                type: string
+              term:
+                type: string
+              completedAt:
+                type: string
+                format: date-time
+        academicSession:
+          type: string
+        consentId:
+          type: string
+
+    CreditDepositResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        referenceId:
+          type: string
+        totalCredits:
+          type: number
+        processedAt:
+          type: string
+          format: date-time
+
+    CreditTransferRequest:
+      type: object
+      required: [abcId, apaarId, sourceInstitutionId, destinationInstitutionId, credits, consentId]
+      properties:
+        abcId:
+          type: string
+        apaarId:
+          type: string
+        sourceInstitutionId:
+          type: string
+        destinationInstitutionId:
+          type: string
+        credits:
+          type: array
+          items:
+            type: object
+            properties:
+              courseId:
+                type: string
+              credits:
+                type: number
+              grade:
+                type: string
+              level:
+                type: string
+        consentId:
+          type: string
+
+    CreditTransferResponse:
+      type: object
+      properties:
+        accepted:
+          type: boolean
+        transfer:
+          type: object
+          properties:
+            transferId:
+              type: string
+            status:
+              type: string
+              enum: [pending, approved, rejected, completed]
+        pendingActions:
+          type: array
+          items:
+            type: string
+
+    ConsentCollectionRequest:
+      type: object
+      required: [purposes, dataCategories, noticeVersion]
+      properties:
+        purposes:
+          type: array
+          items:
+            type: string
+            enum: [education_delivery, assessment, ai_personalization, analytics, communication, dpi_integration, third_party_sharing, research]
+        dataCategories:
+          type: array
+          items:
+            type: string
+            enum: [personal_identity, academic_records, learning_activity, assessment_data, behavioral_data, health_data, biometric_data, location_data, communication_data]
+        noticeVersion:
+          type: string
+        isMinor:
+          type: boolean
+          default: false
+        guardianUserId:
+          type: string
+
+    ConsentArtifact:
+      type: object
+      properties:
+        consentId:
+          type: string
+        userId:
+          type: string
+        tenantId:
+          type: string
+        purpose:
+          type: string
+        dataCategories:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, withdrawn, expired, pending_verification]
+        collectedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        withdrawnAt:
+          type: string
+          format: date-time
+
+    ConsentWithdrawalRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+        requestDataDeletion:
+          type: boolean
+          default: false
+
+    DSARRequest:
+      type: object
+      required: [type, verificationRef]
+      properties:
+        type:
+          type: string
+          enum: [access, rectification, erasure, portability, restriction, objection]
+        dataCategories:
+          type: array
+          items:
+            type: string
+        reason:
+          type: string
+        verificationRef:
+          type: string
+
+    DSARResult:
+      type: object
+      properties:
+        requestId:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, rejected]
+        itemsProcessed:
+          type: integer
+        completedAt:
+          type: string
+          format: date-time
