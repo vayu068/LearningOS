@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-006",
+  "type": "fix",
+  "description": "Address all 8 security and architecture issues identified in the semantic code review: role escalation, AI provider stubs, OAuth state forgery, tenant isolation gaps, Lambda-incompatible rate limiter, consent verification bypass, offline sync infinite retry, and DynamoDB auto-scaling misconfiguration.",
+  "status": "completed",
+  "steps": [
+    "Add role allowlist validation in register handler (student, teacher, parent only for self-registration)",
+    "Add BedrockNotConfiguredError and OpenAINotConfiguredError classes with improved isAvailable() detection",
+    "Add HMAC-SHA256 signing/verification to DigiLocker OAuth state parameter",
+    "Wire enforceTenantIsolation into authenticateRequest middleware automatically",
+    "Implement DynamoDBRateLimitStore with atomic counters and TTL-based cleanup",
+    "Add ConsentManager.verifyConsentForProcessing calls in ABC and APAAR DPI handlers",
+    "Differentiate 4xx from network errors in service worker and ApiClient offline sync",
+    "Switch prod DynamoDB to PROVISIONED billing mode so auto-scaling is valid"
+  ],
+  "acceptance_criteria": [
+    "Self-registration rejects privileged roles (super_admin, tenant_admin, etc.)",
+    "AI provider isAvailable() returns false when using placeholder clients",
+    "DigiLocker callback rejects forged state parameters without valid HMAC",
+    "Auth middleware automatically rejects cross-tenant requests",
+    "DynamoDBRateLimitStore implements the RateLimitStore interface",
+    "DPI handlers reject invalid/expired/withdrawn consent artifacts",
+    "Offline sync removes permanently-failed 4xx mutations from queue",
+    "CDK synth succeeds with provisioned mode and auto-scaling in prod"
+  ],
+  "verification": [
+    "cd /projects/sandbox/LearningOS && pnpm build",
+    "cd /projects/sandbox/LearningOS && pnpm test",
+    "cd /projects/sandbox/LearningOS && pnpm lint"
+  ],
+  "blocked_reason": null,
+  "findings": "All 203 existing tests continue to pass. The auth middleware test works because when no X-Tenant-ID header is present, enforceTenantIsolation passes through (returning null). The consent verification in DPI handlers uses a pluggable ConsentStore interface that must be wired up in production. The DynamoDB rate limit store uses conditional expressions for atomic counter semantics."
+}
