@@ -1,6 +1,7 @@
 /**
  * India Digital Public Infrastructure (DPI) integration types.
  * Supports APAAR, DigiLocker, and Academic Bank of Credits (ABC).
+ * Includes DPDP Act consent management types.
  */
 
 /**
@@ -22,6 +23,8 @@ export interface APAARProfile {
   academicLevel: AcademicLevel;
   /** Verification status */
   verificationStatus: DPIVerificationStatus;
+  /** Last verified timestamp */
+  lastVerifiedAt?: string;
 }
 
 export type AcademicLevel =
@@ -127,4 +130,105 @@ export interface ABCCreditDeposit {
   term: string;
   /** Completion date */
   completedAt: string;
+}
+
+/**
+ * DPDP Act (Digital Personal Data Protection) Consent Artifact.
+ * Models the full consent lifecycle: collect, verify, withdraw.
+ */
+export interface ConsentArtifact {
+  /** Unique consent identifier */
+  consentId: string;
+  /** User who gave consent */
+  userId: string;
+  /** Tenant context */
+  tenantId: string;
+  /** Purpose of data collection */
+  purpose: ConsentPurpose;
+  /** Specific data categories covered */
+  dataCategories: DataCategory[];
+  /** Current consent status */
+  status: ConsentStatus;
+  /** When consent was collected */
+  collectedAt: string;
+  /** When consent expires (if applicable) */
+  expiresAt?: string;
+  /** When consent was withdrawn (if applicable) */
+  withdrawnAt?: string;
+  /** Version of the consent notice */
+  noticeVersion: string;
+  /** Whether this consent is for a minor (requires guardian approval) */
+  isMinor: boolean;
+  /** Guardian consent details (for minors) */
+  guardianConsent?: GuardianConsent;
+  /** Processing mode */
+  processingMode: "automatic" | "manual";
+}
+
+export type ConsentStatus = "active" | "withdrawn" | "expired" | "pending_verification";
+
+export type ConsentPurpose =
+  | "education_delivery"
+  | "assessment"
+  | "ai_personalization"
+  | "analytics"
+  | "communication"
+  | "dpi_integration"
+  | "third_party_sharing"
+  | "research";
+
+export type DataCategory =
+  | "personal_identity"
+  | "academic_records"
+  | "learning_activity"
+  | "assessment_data"
+  | "behavioral_data"
+  | "health_data"
+  | "biometric_data"
+  | "location_data"
+  | "communication_data";
+
+export interface GuardianConsent {
+  /** Guardian user ID */
+  guardianUserId: string;
+  /** Relationship to minor */
+  relationship: "parent" | "legal_guardian";
+  /** When guardian gave consent */
+  consentedAt: string;
+  /** Verification method */
+  verificationMethod: "aadhaar" | "digilocker" | "manual";
+}
+
+/**
+ * Consent collection request.
+ */
+export interface ConsentCollectionRequest {
+  userId: string;
+  tenantId: string;
+  purposes: ConsentPurpose[];
+  dataCategories: DataCategory[];
+  noticeVersion: string;
+  isMinor: boolean;
+  guardianUserId?: string;
+}
+
+/**
+ * Consent verification result.
+ */
+export interface ConsentVerificationResult {
+  consentId: string;
+  isValid: boolean;
+  reason?: string;
+  expiresAt?: string;
+}
+
+/**
+ * Consent withdrawal request.
+ */
+export interface ConsentWithdrawalRequest {
+  consentId: string;
+  userId: string;
+  reason?: string;
+  /** Whether to delete associated data */
+  requestDataDeletion: boolean;
 }

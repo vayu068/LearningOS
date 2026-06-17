@@ -6,17 +6,26 @@
     "build": "tsc --project tsconfig.json",
     "dev": "serverless offline start",
     "lint": "eslint . --ext .ts --max-warnings 0",
-    "test": "echo \"No tests yet\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "clean": "rm -rf dist .turbo node_modules .serverless"
   },
   "dependencies": {
-    "@learning-os/shared": "workspace:*"
+    "@aws-sdk/client-cognito-identity-provider": "^3.1070.0",
+    "@aws-sdk/client-dynamodb": "^3.1070.0",
+    "@aws-sdk/lib-dynamodb": "^3.1070.0",
+    "@learning-os/shared": "workspace:*",
+    "jsonwebtoken": "^9.0.3",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.136",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.0.0",
+    "@types/uuid": "^11.0.0",
     "serverless": "^3.38.0",
     "serverless-offline": "^13.3.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^4.1.9"
   }
 }
